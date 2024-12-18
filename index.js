@@ -4,7 +4,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Dynamic port for production environments
+const PORT = 1000; // Dynamic port for production environments
 
 // Middleware
 app.use(bodyParser.json());
@@ -53,5 +53,5 @@ app.post("/send-sms", async (req, res) => {
 });
 
 // Start the server
-const PORT = process.env.PORT || 3000;
+const PORT =  1000;
 app.listen(PORT, () => console.log(`Proxy server running on port ${PORT}`));
