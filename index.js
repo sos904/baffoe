@@ -4,23 +4,17 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 
 const app = express();
-const PORT = 1000; // Dynamic port for production environments
 
 // Middleware
 app.use(bodyParser.json());
 app.use(cors());
 
-// Route for sending SMS
+// Route to handle SMS sending
 app.post("/send-sms", async (req, res) => {
+  const { api_key, sender_id, message, recipient } = req.body;
+
   try {
-    const { api_key, sender_id, message, recipient } = req.body;
-
-    // Check for missing parameters
-    if (!api_key || !sender_id || !message || !recipient) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    // Send request to the SMS API
+    // Forward the request to UelloSend
     const response = await axios.post(
       "https://uellosend.com/quicksend/",
       {
@@ -36,22 +30,17 @@ app.post("/send-sms", async (req, res) => {
       }
     );
 
+    // Return UelloSend response to the client
     res.status(200).json(response.data);
   } catch (error) {
-    // Handle Axios errors specifically
-    if (error.response) {
-      // API responded with an error
-      res.status(error.response.status).json({ error: error.response.data });
-    } else if (error.request) {
-      // No response received from the API
-      res.status(500).json({ error: "No response from SMS API" });
-    } else {
-      // Something else went wrong
-      res.status(500).json({ error: error.message });
-    }
+    // Handle errors gracefully
+    res.status(500).json({
+      error: error.message,
+      details: error.response?.data || null,
+    });
   }
 });
 
 // Start the server
-const PORT =  1000;
-app.listen(PORT, () => console.log(`Proxy server running on port ${PORT}`));
+const PORT = 3000; // Render uses dynamic port assignment
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
