@@ -11,6 +11,7 @@ app.use(cors());
 
 // Route to handle SMS sending
 app.post("/send-sms", async (req, res) => {
+   console.log("Request body:", req.body);
   const { api_key, sender_id, message, recipient } = req.body;
 
   try {
