@@ -17,7 +17,7 @@ app.post("/send-sms", async (req, res) => {
   try {
     // Forward the request to UelloSend
     const response = await axios.post(
-      "https://uellosend.com/quicksend/",
+      "https://uellosend.com/campaign/",
       {
         api_key,
         sender_id,
