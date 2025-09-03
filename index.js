@@ -5,36 +5,23 @@ const cors = require("cors");
 
 const app = express();
 
-// Middleware
-app.use(bodyParser.json());
+// Middleware with increased body size limit
+app.use(bodyParser.json({ limit: "50mb" })); // allow up to 50 MB
 app.use(cors());
 
 // Route to handle SMS sending
 app.post("/send-sms", async (req, res) => {
-  
   const { api_key, sender_id, message, recipient } = req.body;
 
   try {
-    // Forward the request to UelloSend
     const response = await axios.post(
       "https://uellosend.com/campaign/",
-      {
-        api_key,
-        sender_id,
-        message,
-        recipient,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+      { api_key, sender_id, message, recipient },
+      { headers: { "Content-Type": "application/json" } }
     );
 
-    // Return UelloSend response to the client
     res.status(200).json(response.data);
   } catch (error) {
-    // Handle errors gracefully
     res.status(500).json({
       error: error.message,
       details: error.response?.data || null,
@@ -42,6 +29,7 @@ app.post("/send-sms", async (req, res) => {
   }
 });
 
+// Check balance route
 app.post("/check-balance", async (req, res) => {
   const { api_key } = req.body;
 
@@ -56,7 +44,7 @@ app.post("/check-balance", async (req, res) => {
       { headers: { "Content-Type": "application/json" } }
     );
 
-    res.status(200).json(balanceResponse.data); // Send the balance data back
+    res.status(200).json(balanceResponse.data);
   } catch (error) {
     res.status(500).json({
       error: error.message,
@@ -66,5 +54,5 @@ app.post("/check-balance", async (req, res) => {
 });
 
 // Start the server
-const PORT = 3000; // Render uses dynamic port assignment
+const PORT = 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
