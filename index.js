@@ -4,7 +4,10 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 
 const app = express();
-app.use(bodyParser.json());
+
+// Increase body size limit
+app.use(bodyParser.json({ limit: "10mb" }));
+app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
 app.use(cors());
 
 // Helper function to split into batches
@@ -24,19 +27,13 @@ app.post("/send-sms", async (req, res) => {
   }
 
   try {
-    const batches = chunkArray(recipient, 350); // 350 contacts per batch
+    const batches = chunkArray(recipient, 350);
     const results = [];
 
-    // Send batches sequentially
     for (const batch of batches) {
       const response = await axios.post(
         "https://uellosend.com/campaign/",
-        {
-          api_key,
-          sender_id,
-          message,
-          recipient: batch,
-        },
+        { api_key, sender_id, message, recipient: batch },
         { headers: { "Content-Type": "application/json" } }
       );
       results.push(response.data);
@@ -55,7 +52,6 @@ app.post("/send-sms", async (req, res) => {
   }
 });
 
-// Check balance route remains same...
 app.post("/check-balance", async (req, res) => {
   const { api_key } = req.body;
   if (!api_key) return res.status(400).json({ error: "API key is required" });
