@@ -4,10 +4,10 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 
 const app = express();
-app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.json());
 app.use(cors());
 
-// Helper function to split array into chunks
+// Helper function to split into batches
 function chunkArray(array, size) {
   const result = [];
   for (let i = 0; i < array.length; i += size) {
@@ -19,28 +19,55 @@ function chunkArray(array, size) {
 app.post("/send-sms", async (req, res) => {
   const { api_key, sender_id, message, recipient } = req.body;
 
-  if (!Array.isArray(recipient) || recipient.length === 0) {
-    return res.status(400).json({ error: "Recipient list is empty or invalid" });
+  if (!api_key || !sender_id || !message || !recipient || recipient.length === 0) {
+    return res.status(400).json({ error: "Missing required parameters" });
   }
 
   try {
-    const batchSize = 500; // Adjust batch size if needed
-    const batches = chunkArray(recipient, batchSize);
+    const batches = chunkArray(recipient, 350); // 350 contacts per batch
     const results = [];
 
+    // Send batches sequentially
     for (const batch of batches) {
       const response = await axios.post(
         "https://uellosend.com/campaign/",
-        { api_key, sender_id, message, recipient: batch },
+        {
+          api_key,
+          sender_id,
+          message,
+          recipient: batch,
+        },
         { headers: { "Content-Type": "application/json" } }
       );
       results.push(response.data);
-      console.log(`Batch of ${batch.length} sent`);
     }
 
-    res.status(200).json({ status: "All batches sent", results });
+    res.status(200).json({
+      status: "Success",
+      totalBatches: batches.length,
+      responses: results,
+    });
   } catch (error) {
-    console.error("Error sending SMS:", error.response?.data || error.message);
+    res.status(500).json({
+      error: error.message,
+      details: error.response?.data || null,
+    });
+  }
+});
+
+// Check balance route remains same...
+app.post("/check-balance", async (req, res) => {
+  const { api_key } = req.body;
+  if (!api_key) return res.status(400).json({ error: "API key is required" });
+
+  try {
+    const balanceResponse = await axios.post(
+      "https://uellosend.com/balance/",
+      { api_key },
+      { headers: { "Content-Type": "application/json" } }
+    );
+    res.status(200).json(balanceResponse.data);
+  } catch (error) {
     res.status(500).json({
       error: error.message,
       details: error.response?.data || null,
